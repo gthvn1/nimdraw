@@ -3,7 +3,7 @@ import std/strformat
 
 proc printHeader(f: FileStream, width, height: int): void =
     # Header
-    f.writeLine("P6") # "P6" means this is a RGB color image in ASCII format
+    f.writeLine("P6") # "P6" means this is a RGB color image in RAW format
     f.writeLine(fmt"{width} {height}")
     f.writeLine("255") # is the maximum value for each color
    
