@@ -1,12 +1,15 @@
+import std/cmdline
 import std/logging
+import std/parseopt
 import std/streams
 import std/strformat
 
 type RGB = (uint8, uint8, uint8)
 
 const BLACK: RGB = (0, 0, 0)
-const WHITE: RGB = (255, 255, 255)
 const BLUE: RGB = (0, 94, 184)
+const GREEN: RGB = (0, 255, 0)
+const WHITE: RGB = (255, 255, 255)
 
 const WIDTH = 300
 const HEIGHT = 180
@@ -47,6 +50,12 @@ proc rasterize(self: PPM, fun: proc(u, v: float): RGB): PPM =
 
     self
 
+func boxFunc(u, v: float): RGB =
+  GREEN
+
+func circleFunc(u, v: float): RGB =
+  BLACK
+
 func crossFunc(u, v: float): RGB =
   # As we are dealing with integer converted to float we need to introduce an imprecision.
   # In fact this imprecision will define the thickness of the cross.
@@ -59,6 +68,34 @@ func crossFunc(u, v: float): RGB =
   else:
     BLUE
 
+proc help(): void =
+  echo "Other option can be --type [circle|box|cross]"
+  echo "    default is cross"
+
 when isMainModule:
-    createPPM(SAMPLE, WIDTH, HEIGHT).rasterize(crossFunc).closePPM()
-    logger.log(lvlInfo, fmt"{SAMPLE} has been generated")
+    # We are expecting --type [circle|box|cross] <sample.ppm> 
+    var filename = SAMPLE
+    var shapeFunc = crossFunc 
+
+    var p = initOptParser()
+    for kind, key, val in p.getopt():
+      case kind
+      of cmdLongOption:
+        if key != "type":
+          help()
+          system.quit(1)
+        p.next()
+        shapeFunc = case p.key
+        of "circle": circleFunc
+        of "cross": crossFunc
+        of "box":  boxFunc
+        else: crossFunc
+      of cmdArgument:
+        filename = key
+      else:
+        logger.log(lvlError, fmt"{key} is unknown")
+        help()
+        system.quit(2)
+
+    createPPM(filename, WIDTH, HEIGHT).rasterize(shapeFunc).closePPM()
+    logger.log(lvlInfo, fmt"{filename} has been generated")
