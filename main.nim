@@ -13,15 +13,25 @@ const HEIGHT = 180
 
 const SAMPLE = "sample.ppm"
 
+type PPM = object
+  fs: FileStream
+  width: int
+  height: int
+
 # Log to the console
 var logger = newConsoleLogger()
 
-proc printHeader(f: FileStream, width, height: int): void =
+proc createPPM(filename: string, width, height: int): PPM =
+    let f = newFileStream(filename, fmWrite)
     # Header
     f.writeLine("P3") # "P3" means this is a RGB color image in ASCII format
                       # Use "P6" for raw format but ASCII is better for debbuging
     f.writeLine(fmt"{width} {height}")
     f.writeLine("255") # is the maximum value for each color
+    PPM(fs: f, width: width, height: height)
+
+proc closePPM(self: PPM): void =
+  self.fs.close
 
 func crossFunc(u, v: float): RGB =
   # As we are dealing with integer converted to float we need to introduce an imprecision.
@@ -35,26 +45,20 @@ func crossFunc(u, v: float): RGB =
   else:
     BLUE
 
-proc rasterize(f: FileStream, width, height: int, fun: proc(u, v: float): RGB): void =
+proc rasterize(self: PPM, fun: proc(u, v: float): RGB): PPM =
     # Data is a raster of Height rows, in order from top to bottom.
     # Each row consists of Width pixels, in order from left to right.
 
-    for y in 0..<height:
-      for x in 0..<width:
-        let u = float(x) / float(width - 1)
-        let v = float(y) / float(height - 1)
+    for y in 0..<self.height:
+      for x in 0..<self.width:
+        let u = float(x) / float(self.width - 1)
+        let v = float(y) / float(self.height - 1)
         let (r, g, b) = fun(u, v)
-        f.write(fmt"{r:03} {g:03} {b:03}  ")
-      f.write("\n") 
+        self.fs.write(fmt"{r:03} {g:03} {b:03}  ")
+      self.fs.write("\n")
 
-proc main(): void =
-    let f = newFileStream(SAMPLE, fmWrite)
-    defer: f.close
-
-    printHeader(f, WIDTH, HEIGHT)
-    #drawGreenBox(f, 100, 100)
-    rasterize(f, WIDTH, HEIGHT, crossFunc)
+    self
 
 when isMainModule:
-    main()
+    createPPM(SAMPLE, WIDTH, HEIGHT).rasterize(crossFunc).closePPM()
     logger.log(lvlInfo, fmt"{SAMPLE} has been generated")
