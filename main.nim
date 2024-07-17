@@ -33,18 +33,6 @@ proc createPPM(filename: string, width, height: int): PPM =
 proc closePPM(self: PPM): void =
   self.fs.close
 
-func crossFunc(u, v: float): RGB =
-  # As we are dealing with integer converted to float we need to introduce an imprecision.
-  # In fact this imprecision will define the thickness of the cross.
-  const delta = 0.05
-
-  if u < v + delta and u > v - delta: # f(x) = y , the first diagonal
-    WHITE
-  elif v < -u + 1 + delta and v > -u + 1 - delta: # f(x) = -x + 1 , the second one
-    WHITE
-  else:
-    BLUE
-
 proc rasterize(self: PPM, fun: proc(u, v: float): RGB): PPM =
     # Data is a raster of Height rows, in order from top to bottom.
     # Each row consists of Width pixels, in order from left to right.
@@ -58,6 +46,18 @@ proc rasterize(self: PPM, fun: proc(u, v: float): RGB): PPM =
       self.fs.write("\n")
 
     self
+
+func crossFunc(u, v: float): RGB =
+  # As we are dealing with integer converted to float we need to introduce an imprecision.
+  # In fact this imprecision will define the thickness of the cross.
+  const delta = 0.05
+
+  if u < v + delta and u > v - delta: # f(x) = y , the first diagonal
+    WHITE
+  elif v < -u + 1 + delta and v > -u + 1 - delta: # f(x) = -x + 1 , the second one
+    WHITE
+  else:
+    BLUE
 
 when isMainModule:
     createPPM(SAMPLE, WIDTH, HEIGHT).rasterize(crossFunc).closePPM()
