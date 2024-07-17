@@ -8,7 +8,6 @@ proc printHeader(f: FileStream, width, height: int): void =
     f.writeLine("255") # is the maximum value for each color
    
 proc drawGreenBox(f: FileStream, width, height: int): void =
-
      # Image Data
     for i in 0..<width:
         for j in 0..<height:
