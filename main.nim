@@ -6,6 +6,10 @@ type RGB = (uint8, uint8, uint8)
 
 const BLACK: RGB = (0, 0, 0)
 const WHITE: RGB = (255, 255, 255)
+const BLUE: RGB = (0, 94, 184)
+
+const WIDTH = 300
+const HEIGHT = 180
 
 const SAMPLE = "sample.ppm"
 
@@ -24,12 +28,12 @@ func crossFunc(u, v: float): RGB =
   # In fact this imprecision will define the thickness of the cross.
   const delta = 0.05
 
-  if u < v + delta and u > v - delta: # f(x) = y 
-    BLACK
-  elif v < -u + 1 + delta and v > -u + 1 - delta: # f(x) = -x + 1
-    BLACK
-  else:
+  if u < v + delta and u > v - delta: # f(x) = y , the first diagonal
     WHITE
+  elif v < -u + 1 + delta and v > -u + 1 - delta: # f(x) = -x + 1 , the second one
+    WHITE
+  else:
+    BLUE
 
 proc rasterize(f: FileStream, width, height: int, fun: proc(u, v: float): RGB): void =
     # Data is a raster of Height rows, in order from top to bottom.
@@ -37,8 +41,8 @@ proc rasterize(f: FileStream, width, height: int, fun: proc(u, v: float): RGB): 
 
     for y in 0..<height:
       for x in 0..<width:
-        let u = cast[float](x) / cast[float](width - 1)
-        let v = cast[float](y) / cast[float](height - 1)
+        let u = float(x) / float(width - 1)
+        let v = float(y) / float(height - 1)
         let (r, g, b) = fun(u, v)
         f.write(fmt"{r:03} {g:03} {b:03}  ")
       f.write("\n") 
@@ -46,9 +50,6 @@ proc rasterize(f: FileStream, width, height: int, fun: proc(u, v: float): RGB): 
 proc main(): void =
     let f = newFileStream(SAMPLE, fmWrite)
     defer: f.close
-
-    const HEIGHT = 256
-    const WIDTH = 256
 
     printHeader(f, WIDTH, HEIGHT)
     #drawGreenBox(f, 100, 100)
