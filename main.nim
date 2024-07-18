@@ -1,4 +1,5 @@
 import std/logging
+import std/math
 import std/os
 import std/parseopt
 import std/streams
@@ -9,10 +10,8 @@ type RGB = (uint8, uint8, uint8)
 const BLACK: RGB = (0, 0, 0)
 const BLUE: RGB = (0, 94, 184)
 const GREEN: RGB = (0, 255, 0)
+const RED: RGB = (255, 0, 0)
 const WHITE: RGB = (255, 255, 255)
-
-const WIDTH = 300
-const HEIGHT = 180
 
 const SAMPLE = "sample.ppm"
 
@@ -54,7 +53,14 @@ func boxFunc(u, v: float): RGB =
   GREEN
 
 func circleFunc(u, v: float): RGB =
-  BLACK
+  # The point is in the circle if its distance from the center is less than the radius
+  # Let's draw the japan flag
+  let radius = 0.3
+  let distance = sqrt((u - 0.5)*(u - 0.5) + (v - 0.5)*(v - 0.5))
+  if distance < radius:
+    RED
+  else:
+    WHITE
 
 func crossFunc(u, v: float): RGB =
   # As we are dealing with integer converted to float we need to introduce an imprecision.
@@ -84,6 +90,9 @@ when isMainModule:
     # We are expecting --type [circle|box|cross] <sample.ppm> 
     var filename = SAMPLE
     var shapeFunc = crossFunc 
+    # for cross we are drawing scotland flag so a rectangle is better 
+    var width = 300
+    var height = 180
 
     var p = initOptParser()
     for kind, key, val in p.getopt():
@@ -93,7 +102,11 @@ when isMainModule:
         of "shape", "s":
           p.next()
           case p.key
-          of "circle": shapeFunc = circleFunc
+          of "circle":
+            shapeFunc = circleFunc
+            # for circle a square is better 
+            width = 200
+            height = 200
           of "cross": shapeFunc = crossFunc
           of "box":  shapeFunc = boxFunc
           else:
@@ -110,5 +123,5 @@ when isMainModule:
         logger.log(lvlError, fmt"{kind} is unknown")
         help(1)
 
-    createPPM(filename, WIDTH, HEIGHT).rasterize(shapeFunc).closePPM()
+    createPPM(filename, width, height).rasterize(shapeFunc).closePPM()
     logger.log(lvlInfo, fmt"{filename} has been generated")
