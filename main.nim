@@ -69,7 +69,7 @@ func crossFunc(u, v: float): RGB =
     BLUE
 
 proc help(status: int): void =
-  let progname = getAppFilename()
+  let progname = getAppFilename().extractFilename()
   echo fmt"""
 Usage: {progname} [OPTION...] [output.ppm]
 
