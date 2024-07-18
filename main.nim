@@ -1,5 +1,5 @@
-import std/cmdline
 import std/logging
+import std/os
 import std/parseopt
 import std/streams
 import std/strformat
@@ -68,9 +68,17 @@ func crossFunc(u, v: float): RGB =
   else:
     BLUE
 
-proc help(): void =
-  echo "Other option can be --type [circle|box|cross]"
-  echo "    default is cross"
+proc help(status: int): void =
+  let progname = getAppFilename()
+  echo fmt"""
+Usage: {progname} [OPTION...] [output.ppm]
+
+  -s, --shape        circle|box|cross (default is cross)
+  -h, --help         display this help
+
+If no output.ppm is given sample.ppm will be used.
+  """
+  system.quit(status)
 
 when isMainModule:
     # We are expecting --type [circle|box|cross] <sample.ppm> 
@@ -80,22 +88,27 @@ when isMainModule:
     var p = initOptParser()
     for kind, key, val in p.getopt():
       case kind
-      of cmdLongOption:
-        if key != "type":
-          help()
-          system.quit(1)
-        p.next()
-        shapeFunc = case p.key
-        of "circle": circleFunc
-        of "cross": crossFunc
-        of "box":  boxFunc
-        else: crossFunc
+      of cmdShortOption, cmdLongOption:
+        case key
+        of "shape", "s":
+          p.next()
+          case p.key
+          of "circle": shapeFunc = circleFunc
+          of "cross": shapeFunc = crossFunc
+          of "box":  shapeFunc = boxFunc
+          else:
+            logger.log(lvlError, fmt"shape {p.key} is invalid")
+            help(1)
+        of "help", "h":
+          help(0)
+        else:
+          logger.log(lvlError, fmt"option {key} is unknown")
+          help(1)
       of cmdArgument:
         filename = key
       else:
-        logger.log(lvlError, fmt"{key} is unknown")
-        help()
-        system.quit(2)
+        logger.log(lvlError, fmt"{kind} is unknown")
+        help(1)
 
     createPPM(filename, WIDTH, HEIGHT).rasterize(shapeFunc).closePPM()
     logger.log(lvlInfo, fmt"{filename} has been generated")
